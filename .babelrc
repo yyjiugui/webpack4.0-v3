@@ -1,0 +1,8 @@
+{
+  // 把babel的配置放到单独的配置文件中 从webpack配置中抽离
+  "presets": ["@babel/preset-env"],
+  "plugins": [
+    "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-transform-runtime"
+  ]
+}
