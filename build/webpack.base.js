@@ -3,22 +3,46 @@ const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 // VueLoader插件
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
-// CopyWebpackPlugin
-const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const webpack = require('webpack')
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
-// webpack不只是可以打包单页面应用  entry配置多入口可以打包多页面应用的(如果我们使用的vue框架这种方式不常用的 使用动态导入实现代码分离)
+// 插件作用: 每次打包 删除dist目录
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+
 module.exports = {
-  // optimization: {
-  //   splitChunks: {
-  //     // js代码分离
-  //     // 抽取公共代码 例如所有模块都用到了jquery 使用该配置把jquery放到了vendors~main~other.bundle.js文件中
-  //     chunks: 'all' // 每个js文件都可以理解为chunks,一个一个的模块  !!! 采用动态导入后代码会自动分割
-  //   }
-  // },
+  optimization: {
+    /*
+  	 SplitChunksPlugin配置参数 该节点下有很多webpack的默认配置
+		 https://www.webpackjs.com/plugins/split-chunks-plugin/
+   	*/
+    splitChunks: {
+      chunks: 'all', // 只对异步加载的模块进行拆分，可选值还有all | initial
+      minSize: 30000, // 模块最少大于30KB才拆分
+      maxSize: 0, // 模块大小无上限，只要大于30KB都拆分
+      minChunks: 1, // 模块最少引用一次才会被拆分
+      maxAsyncRequests: 5, // 按需加载时并行请求的最大数量。最大不能超过5,超过5的部分不拆分
+      maxInitialRequests: 3, // 入口点的最大并行请求数。页面初始化时同时发送的请求数量最大不能超过3,超过3的部分不拆分
+      automaticNameDelimiter: '~', // 默认的连接符
+      name: true, // 拆分的chunk名,设为true表示根据模块名和CacheGroup的key来自动生成,使用上面连接符连接
+      cacheGroups: {
+        // 缓存组配置,上面配置读取完成后进行拆分,如果需要把多个模块拆分到一个文件,就需要缓存,所以命名为缓存组
+        vendors: {
+          // 自定义缓存组名
+          test: /[\\/]node_modules[\\/]/, // 检查node_modules目录,只要模块在该目录下就使用上面配置拆分到这个组
+          priority: -10 // 权重-10,决定了哪个组优先匹配,例如node_modules下有个模块要拆分,同时满足vendors和default组,此时就会分到vendors组,因为-10 > -20
+        },
+        default: {
+          // 默认缓存组名
+          minChunks: 2, // 最少引用两次才会被拆分
+          priority: -20, // 权重-20
+          reuseExistingChunk: true // 如果主入口中引入了两个模块,其中一个正好也引用了后一个,就会直接复用,无需引用两次
+        }
+      }
+    }
+  },
+  // // webpack不只是可以打包单页面应用  entry配置多入口可以打包多页面应用的(如果我们使用的vue框架这种方式不常用的 使用动态导入实现代码分离)
   // entry: {
   //   main: './src/main.js',
   //   other: './src/other.js'
@@ -30,6 +54,7 @@ module.exports = {
     publicPath: '/'
   },
   module: {
+    noParse: /jquery|bootstrap/,
     rules: [
       // webpack只理解JavaScript文件
       {
@@ -109,6 +134,9 @@ module.exports = {
     }), // mini-css-extract-plugin是用于将CSS提取为独立的文件的插件，对每个包含css的js文件都会创建一个CSS文件，支持按需加载css
     new MiniCssExtractPlugin({
       filename: '[name].css'
-    })
+    }),
+    new CleanWebpackPlugin(),
+    // moment ./locale
+    new webpack.IgnorePlugin(/\.\/locale/, /moment/)
   ]
 }
