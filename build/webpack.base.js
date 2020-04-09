@@ -9,7 +9,9 @@ const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 // 插件作用: 每次打包 删除dist目录
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+// const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+
+const AddAssetHtmlWebpackPlugin = require('add-asset-html-webpack-plugin')
 
 module.exports = {
   optimization: {
@@ -54,7 +56,7 @@ module.exports = {
     publicPath: '/'
   },
   module: {
-    noParse: /jquery|bootstrap/,
+    noParse: /^(jquery|bootstrap)$/,
     rules: [
       // webpack只理解JavaScript文件
       {
@@ -135,8 +137,16 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: '[name].css'
     }),
-    new CleanWebpackPlugin(),
+    // new CleanWebpackPlugin(),
     // moment ./locale
-    new webpack.IgnorePlugin(/\.\/locale/, /moment/)
+    new webpack.IgnorePlugin(/\.\/locale/, /moment/),
+    new webpack.DllReferencePlugin({
+      // DLLReferencePlugin指定manifest文件的位置
+      manifest: path.resolve(__dirname, '../dist/manifest.json')
+    }),
+    new AddAssetHtmlWebpackPlugin({
+      // 将vue-dll文件自动引入到打包自动插入到html中
+      filepath: path.resolve(__dirname, '../dist/module_dll.js')
+    })
   ]
 }
