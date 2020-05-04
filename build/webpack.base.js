@@ -13,6 +13,8 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 const AddAssetHtmlWebpackPlugin = require('add-asset-html-webpack-plugin')
 
+const HappyPack = require('happypack')
+
 module.exports = {
   optimization: {
     /*
@@ -105,12 +107,20 @@ module.exports = {
         test: /\.vue$/,
         use: ['vue-loader']
       },
+      // {
+      //   test: /\.js$/,
+      //   use: {
+      //     loader: 'babel-loader'
+      //   },
+      //   exclude: /(node_modules|bower_components)/
+      // },
       {
-        test: /\.js$/,
+        test: /.js$/,
         use: {
-          loader: 'babel-loader'
+          loader: 'happypack/loader'
         },
-        exclude: /(node_modules|bower_components)/
+        include: path.resolve(__dirname, './src'),
+        exclude: /node_modules/
       },
       {
         // 处理html，支持直接在html中使用img标签加载图片
@@ -142,11 +152,15 @@ module.exports = {
     new webpack.IgnorePlugin(/\.\/locale/, /moment/),
     new webpack.DllReferencePlugin({
       // DLLReferencePlugin指定manifest文件的位置
-      manifest: path.resolve(__dirname, '../dist/manifest.json')
+      manifest: path.resolve(__dirname, '../dll/manifest.json')
     }),
     new AddAssetHtmlWebpackPlugin({
       // 将vue-dll文件自动引入到打包自动插入到html中
-      filepath: path.resolve(__dirname, '../dist/module_dll.js')
+      filepath: path.resolve(__dirname, '../dll/module_dll.js')
+    }),
+    // 多进程打包
+    new HappyPack({
+      loaders: ['babel-loader']
     })
   ]
 }
